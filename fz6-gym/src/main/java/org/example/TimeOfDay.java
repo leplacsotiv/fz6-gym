@@ -2,7 +2,7 @@ package org.example;
 
 import java.util.Objects;
 
-public class TimeOfDay implements Comparable<TimeOfDay>{
+public class TimeOfDay implements Comparable<TimeOfDay> {
 
     //часы (от 0 до 23)
     private int hours;
@@ -32,7 +32,7 @@ public class TimeOfDay implements Comparable<TimeOfDay>{
 
     @Override
     public int compareTo(TimeOfDay o) {
-        if(this.hours - o.hours == 0) {
+        if (this.hours - o.hours == 0) {
             return this.minutes - o.minutes;
         }
         return this.hours - o.hours;

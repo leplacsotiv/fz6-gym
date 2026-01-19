@@ -1,4 +1,3 @@
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,9 +38,14 @@ public class TimetableTest {
         assertNull(result);
     }
 
+
     @Test
     public void testGetTrainingSessionsForDayAndTimeNullTime() {
-        assertNull(timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY, null));
+        List<TrainingSession> result =
+                timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY, null);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
 
@@ -67,7 +71,7 @@ public class TimetableTest {
 
         assertEquals(1, timetable.getTrainingSessionsForDay(DayOfWeek.MONDAY).size());
         assertNull(timetable.getTrainingSessionsForDay(DayOfWeek.TUESDAY));
-        assertEquals(2,timetable.getTrainingSessionsForDay(DayOfWeek.THURSDAY).size());
+        assertEquals(2, timetable.getTrainingSessionsForDay(DayOfWeek.THURSDAY).size());
         TimeOfDay first = timetable.getTrainingSessionsForDay(DayOfWeek.THURSDAY).firstKey();
         TimeOfDay second = timetable.getTrainingSessionsForDay(DayOfWeek.THURSDAY).lastKey();
         assertEquals(13, first.getHours());
@@ -83,15 +87,18 @@ public class TimetableTest {
 
         timetable.addNewTrainingSession(singleTrainingSession);
 
-        assertEquals(1,timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY,
-                new TimeOfDay(13,0)).size());
-        assertNull(timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY,new TimeOfDay(14,0)));
+        assertEquals(1, timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY,
+                new TimeOfDay(13, 0)).size());
+        List<TrainingSession> at14 =
+                timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY, new TimeOfDay(14, 0));
+        assertNotNull(at14);
+        assertTrue(at14.isEmpty());
     }
 
 
     @Test
     public void testGetCountByCoachesEmpty() {
-        List<Map.Entry<Coach,Integer>> result = timetable.getCountByCoaches();
+        List<CoachStats> result = timetable.getCountByCoaches();
 
         assertTrue(result.isEmpty());
     }
@@ -100,16 +107,19 @@ public class TimetableTest {
     public void testGetCountByCoachesOneCoach() {
         Group group = new Group("Акробатика для детей", Age.CHILD, 60);
 
-        TrainingSession singleTrainingSession = new TrainingSession(group, VASILEV,
-                DayOfWeek.MONDAY, new TimeOfDay(13, 0));
+        TrainingSession singleTrainingSession = new TrainingSession(
+                group, VASILEV, DayOfWeek.MONDAY, new TimeOfDay(13, 0)
+        );
 
         timetable.addNewTrainingSession(singleTrainingSession);
-        List<Map.Entry<Coach,Integer>> result = timetable.getCountByCoaches();
 
-        assertEquals(1,result.size());
-        assertEquals(1, result.getFirst().getValue());
-        assertEquals(VASILEV, result.getFirst().getKey());
+        List<CoachStats> result = timetable.getCountByCoaches();
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.getFirst().sessionsCount());
+        assertEquals(VASILEV, result.getFirst().coach());
     }
+
 
     @Test
     public void testGetCountByCoachesSorted() {
@@ -129,17 +139,17 @@ public class TimetableTest {
         timetable.addNewTrainingSession(new TrainingSession(group, PETROV, DayOfWeek.WEDNESDAY,
                 new TimeOfDay(15, 0)));
 
-        List<Map.Entry<Coach,Integer>> result = timetable.getCountByCoaches();
+        List<CoachStats> result = timetable.getCountByCoaches();
 
 
         assertEquals(3, result.size());
 
-        assertEquals(3, result.get(0).getValue());
-        assertEquals(VASILEV, result.get(0).getKey());
-        assertEquals(2, result.get(1).getValue());
-        assertEquals(IVANOV, result.get(1).getKey());
-        assertEquals(1, result.get(2).getValue());
-        assertEquals(PETROV, result.get(2).getKey());
+        assertEquals(3, result.get(0).sessionsCount());
+        assertEquals(VASILEV, result.get(0).coach());
+        assertEquals(2, result.get(1).sessionsCount());
+        assertEquals(IVANOV, result.get(1).coach());
+        assertEquals(1, result.get(2).sessionsCount());
+        assertEquals(PETROV, result.get(2).coach());
 
     }
 
@@ -149,28 +159,29 @@ public class TimetableTest {
         Group g2 = new Group("G2", Age.ADULT, 90);
 
         timetable.addNewTrainingSession(new TrainingSession(g1, VASILEV, DayOfWeek.MONDAY,
-                new TimeOfDay(13,0)));
+                new TimeOfDay(13, 0)));
         timetable.addNewTrainingSession(new TrainingSession(g2, IVANOV, DayOfWeek.MONDAY,
-                new TimeOfDay(13,0)));
-        List<Map.Entry<Coach,Integer>> result = timetable.getCountByCoaches();
+                new TimeOfDay(13, 0)));
+        List<CoachStats> result = timetable.getCountByCoaches();
 
-        assertEquals(2, timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY, new TimeOfDay(13,0)).size());
-        assertEquals(1,result.get(0).getValue());
-        assertEquals(1,result.get(1).getValue());
+        assertEquals(2, timetable.getTrainingSessionsForDayAndTime(DayOfWeek.MONDAY, new TimeOfDay(13, 0)).size());
+        assertEquals(1, result.get(0).sessionsCount());
+        assertEquals(1, result.get(1).sessionsCount());
     }
+
     @Test
     public void testGetCountByCoachesEqualCounts() {
         Group group = new Group("Test", Age.CHILD, 60);
-        timetable.addNewTrainingSession(new TrainingSession(group, VASILEV, DayOfWeek.MONDAY, new TimeOfDay(10,0)));
-        timetable.addNewTrainingSession(new TrainingSession(group, VASILEV, DayOfWeek.TUESDAY, new TimeOfDay(11,0)));
-        timetable.addNewTrainingSession(new TrainingSession(group, IVANOV, DayOfWeek.WEDNESDAY, new TimeOfDay(12,0)));
-        timetable.addNewTrainingSession(new TrainingSession(group, IVANOV, DayOfWeek.THURSDAY, new TimeOfDay(13,0)));
+        timetable.addNewTrainingSession(new TrainingSession(group, VASILEV, DayOfWeek.MONDAY, new TimeOfDay(10, 0)));
+        timetable.addNewTrainingSession(new TrainingSession(group, VASILEV, DayOfWeek.TUESDAY, new TimeOfDay(11, 0)));
+        timetable.addNewTrainingSession(new TrainingSession(group, IVANOV, DayOfWeek.WEDNESDAY, new TimeOfDay(12, 0)));
+        timetable.addNewTrainingSession(new TrainingSession(group, IVANOV, DayOfWeek.THURSDAY, new TimeOfDay(13, 0)));
 
-        List<Map.Entry<Coach, Integer>> result = timetable.getCountByCoaches();
+        List<CoachStats> result = timetable.getCountByCoaches();
 
         assertEquals(2, result.size());
-        assertEquals(2, result.get(0).getValue());
-        assertEquals(2, result.get(1).getValue());
+        assertEquals(2, result.get(0).sessionsCount());
+        assertEquals(2, result.get(1).sessionsCount());
     }
 
 }
